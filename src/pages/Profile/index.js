@@ -8,6 +8,7 @@ import { TabContext, TabList } from '@mui/lab';
 import { useState } from 'react';
 import Domains from './Domains';
 import Portfolio from './Portfolio';
+import SocialMedia from '../../components/SocialMedia';
 
 const ProfileBackground = styled(Box)(() => ({
 	width: '100%',
@@ -78,7 +79,10 @@ const Profile = () => {
 				<UserBasicInfo>
 					<CommonAvatar avatar={avatar} scope={100} />
 					<Box>
-						<Name>Jassen</Name>
+						<Stack direction="row" alignItems="center" spacing={3}>
+							<Name>Jassen</Name>
+							<SocialMedia />
+						</Stack>
 						<Bio>This is a Web3 Reflect domain</Bio>
 					</Box>
 				</UserBasicInfo>

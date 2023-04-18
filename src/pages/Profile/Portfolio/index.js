@@ -25,8 +25,8 @@ const dates = ['ALL', 'Day', 'Week', 'Month'];
 const Portfolio = () => {
 	const [times, setTimes] = useState('Day');
 
-	const handleChangeDate = useCallback((event) => {
-		setTimes(event.target.value);
+	const handleChangeDate = useCallback((_, newValue) => {
+		setTimes(newValue);
 	}, []);
 
 	return (
@@ -52,6 +52,7 @@ const Portfolio = () => {
 						borderRadius: '10px',
 					}}
 					value={times}
+					exclusive
 					onChange={handleChangeDate}
 				>
 					{dates.map((item) => (
