@@ -1,19 +1,22 @@
 import { Box, IconButton, Stack, Tab, Typography, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import avatar from '../../assets/images/avatar.png';
 import CommonPage from '../../components/CommonUI/CommonPage';
 import CommonAvatar from '../../components/CommonAvatar';
+import { AvatarGenerator } from 'random-avatar-generator';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { TabContext, TabList } from '@mui/lab';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Domains from './Domains';
 import Portfolio from './Portfolio';
 import SocialMedia from '../../components/SocialMedia';
+import { useDispatch, useSelector } from 'react-redux';
+import { useAccount } from 'wagmi';
+import { getProfile } from '../../api/profile';
 
-const ProfileBackground = styled(Box)(() => ({
+const ProfileBackground = styled(Box)(({ ...props }) => ({
 	width: '100%',
 	height: '120px',
-	background: `url(${avatar})`,
+	background: `url(${props.img})`,
 	borderRadius: '20px',
 	backgroundPosition: 'center',
 	backgroundRepeat: 'no-repeat',
@@ -45,17 +48,36 @@ const ProfileTab = styled(Tab)(({ theme }) => ({
 
 const Profile = () => {
 	const navigate = useNavigate();
+	const dispatch = useDispatch();
 	// portfolio | domains
 	const [tabValue, setTabValue] = useState('portfolio');
+	const { address } = useAccount();
+	const { profileInfo } = useSelector((state) => ({
+		profileInfo: state.reflect_loginInfo,
+	}));
+
+	const generator = new AvatarGenerator();
+	let addrAvatar = generator.generateRandomAvatar(address);
+
+	const getProfileData = useCallback(async () => {
+		const resp = await getProfile();
+		if (resp?.code === 0 && resp?.data) {
+			dispatch({ type: 'SET_PROFILE', value: resp.data });
+		}
+	}, [dispatch]);
 
 	const handleChangeTab = (_, newValue) => {
 		setTabValue(newValue);
 	};
 
+	useEffect(() => {
+		getProfileData();
+	}, [getProfileData]);
+
 	return (
 		<CommonPage title="Profile" sx={(theme) => ({ padding: '0' })}>
 			{/* background image */}
-			<ProfileBackground>
+			<ProfileBackground img={profileInfo.avatar || addrAvatar}>
 				<Box
 					sx={{
 						width: '100%',
@@ -77,7 +99,11 @@ const Profile = () => {
 				})}
 			>
 				<UserBasicInfo>
-					<CommonAvatar avatar={avatar} scope={100} />
+					<CommonAvatar
+						avatar={profileInfo.avatar}
+						address={address}
+						scope={100}
+					/>
 					<Box>
 						<Stack direction="row" alignItems="center" spacing={3}>
 							<Name>Jassen</Name>

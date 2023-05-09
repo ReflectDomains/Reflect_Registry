@@ -6,10 +6,12 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiConfig } from 'wagmi';
 import { chains, wagmiClient } from './config/client';
 import { Provider } from 'react-redux';
+import { ToastContainer } from 'react-toastify';
 
 import './index.less';
 import '@rainbow-me/rainbowkit/styles.css';
 import 'react-step-progress-bar/styles.css';
+import 'react-toastify/dist/ReactToastify.css';
 import AuthRouter from './provider/AuthRouter';
 import { ThemeProvider } from '@mui/material';
 import theme from './config/theme';
@@ -24,6 +26,7 @@ root.render(
 					<RainbowKitProvider chains={chains}>
 						<AuthRouter>
 							<App />
+							<ToastContainer />
 						</AuthRouter>
 					</RainbowKitProvider>
 				</WagmiConfig>
