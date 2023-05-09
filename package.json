@@ -21,6 +21,7 @@
     "eth-rpc-errors": "^4.0.3",
     "ethers": "^5",
     "file-loader": "^6.2.0",
+    "moment": "^2.29.4",
     "react": "^18.2.0",
     "react-blockies": "^1.4.1",
     "react-dom": "^18.2.0",

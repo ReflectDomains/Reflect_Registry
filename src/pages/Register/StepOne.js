@@ -100,6 +100,7 @@ const StepOne = () => {
 				/>
 				<StyledFormControlLabel
 					value="usdc"
+					disabled
 					label="10 USDC"
 					checked={checked === 'usdc'}
 					control={<Radio999 />}
