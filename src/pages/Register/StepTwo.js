@@ -1,5 +1,5 @@
 import { Stack, Typography } from '@mui/material';
-import { memo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import { TypographyInfo } from '.';
 import SimpleProgess from '../../components/SimpleProgess';
 
@@ -31,16 +31,22 @@ const ContentBar = memo(({ leftText, rightText }) => {
 	);
 });
 
-const StepTwo = () => {
-	const [progess] = useState(100);
+const StepTwo = ({ state }) => {
+	const progess = useMemo(
+		() => (state.paySuccess === 'pending' || 'fail' ? 50 : 100),
+		[state]
+	);
+	const isFailed = useMemo(() => state.paySuccess === 'fail', [state]);
 	return (
 		<Stack direction="column" alignItems="center" justifyContent="center">
 			<TypographyInfo sx={{ fontWeight: 600, textAlign: 'center', mb: '15px' }}>
 				{progess === 100
 					? 'All Transactions Complete'
+					: progess === 50 && isFailed
+					? 'Payment Is Failed'
 					: 'Payment Transcations Sent'}
 			</TypographyInfo>
-			<SimpleProgess progess={progess} />
+			<SimpleProgess state={state} progess={progess} />
 			<Typography
 				sx={(theme) => ({
 					fontSize: '12px',

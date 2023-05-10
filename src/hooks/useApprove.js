@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useContractReads, erc20ABI, useAccount } from 'wagmi';
-import { reflectContract } from '../config/contract';
+import { registerContract } from '../config/contract';
 
-const useApprove = (tokenAddress = [], spenderAddress = reflectContract) => {
+const useApprove = (tokenAddress = [], spenderAddress = registerContract) => {
 	const { address } = useAccount();
 	const [isApprove, setIsApprove] = useState(false);
 	const [readLoading, setReadLoading] = useState(true);

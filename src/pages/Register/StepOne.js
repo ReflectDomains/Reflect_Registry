@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import {
 	Box,
@@ -12,6 +12,17 @@ import {
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { TypographyInfo } from './index';
 import { PlusIcon, RemoveIcon } from '../../assets';
+import useApprove from '../../hooks/useApprove';
+import { tokenForContract } from '../../config/profilePageSetting';
+import { useParams } from 'react-router-dom';
+import { useContractRead } from 'wagmi';
+import { baseRegistrarImplementationABI, registerABI } from '../../config/ABI';
+import {
+	BaseRegistrarImplementation,
+	registerContract,
+} from '../../config/contract';
+import { ensHashName } from '../../utils';
+import useWriteApprove from '../../hooks/useWriteApprove';
 
 const TypographyDes = styled(Typography)(({ theme, sx }) => ({
 	color: theme.color.mentionColor,
@@ -70,11 +81,53 @@ const StyledFormControlLabel = styled((props) => (
 	},
 }));
 
-const StepOne = () => {
+const StepOne = ({ nextPage }) => {
+	const params = useParams();
+
 	const [checked, setChecked] = useState('usdt');
-	const [isApprove, setIsApprove] = useState(false);
 	const [isPaid, setIsPaid] = useState(false);
 	const [years, setYears] = useState(1);
+
+	const { isApprove, setIsApprove } = useApprove([tokenForContract['USDT']]);
+
+	const approveSuccess = useCallback(() => {
+		setIsApprove(true);
+	}, [setIsApprove]);
+
+	const { approve, loading } = useWriteApprove({
+		tokenAddress: tokenForContract['USDT'],
+		onSuccess: approveSuccess,
+	});
+	const { topDomain, secondDomain } = useMemo(() => {
+		return {
+			topDomain: params?.name?.split('.')?.[1],
+			secondDomain: params?.name?.split('.')?.[0],
+		};
+	}, [params]);
+	const btnLoading = useMemo(() => loading, [loading]);
+
+	const durationSeoncd = useMemo(() => years * 365 * 24 * 60, [years]);
+	console.log(
+		[
+			secondDomain,
+			ensHashName(topDomain),
+			durationSeoncd,
+			tokenForContract['USDT'],
+		],
+		'args'
+	);
+
+	const { data: rentPrice } = useContractRead({
+		abi: registerABI,
+		address: registerContract,
+		args: [
+			secondDomain,
+			ensHashName(topDomain),
+			durationSeoncd,
+			tokenForContract['USDT'],
+		],
+	});
+	console.log(rentPrice, 'rentPrice');
 
 	const changeRadio = useCallback((e) => {
 		setChecked(e.target.value);
@@ -82,12 +135,12 @@ const StepOne = () => {
 
 	const approveOrPay = useCallback(() => {
 		if (!isApprove) {
-			setIsApprove(true);
+			approve();
 		} else {
 			// paid
-			setIsPaid(true);
+			nextPage();
 		}
-	}, [isApprove]);
+	}, [isApprove, approve, nextPage]);
 	return (
 		<>
 			<TypographyInfo sx={{ mb: '10px' }}>Supported Tokens:</TypographyInfo>
@@ -162,7 +215,11 @@ const StepOne = () => {
 					/>
 				</Stack>
 			) : (
-				<LoadingButton variant="contained" onClick={approveOrPay}>
+				<LoadingButton
+					loading={btnLoading}
+					variant="contained"
+					onClick={approveOrPay}
+				>
 					{isApprove ? `pay 10 ${checked}` : 'Approve'}
 				</LoadingButton>
 			)}

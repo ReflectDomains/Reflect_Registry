@@ -1,6 +1,6 @@
 import { styled, LinearProgress, Box } from '@mui/material';
-import { memo } from 'react';
-const CustomLinearProgressOut = styled(LinearProgress)(({ value }) => ({
+import { memo, useMemo } from 'react';
+const CustomLinearProgressOut = styled(LinearProgress)(({ value, status }) => ({
 	width: '508px',
 	height: '40px',
 	borderRadius: '30px',
@@ -10,7 +10,7 @@ const CustomLinearProgressOut = styled(LinearProgress)(({ value }) => ({
 		background: 'transparent',
 		'&::after': {
 			position: 'absolute',
-			content: value === 100 ? '"☺️"' : '"😃"',
+			content: value === 100 ? '"☺️"' : status === 'fail' ? '"😓"' : '"😃"',
 			right: '-2px',
 			top: '-5px',
 			background: `transparent`,
@@ -22,32 +22,39 @@ const CustomLinearProgressOut = styled(LinearProgress)(({ value }) => ({
 	},
 }));
 
-const CustomLinearProgressInner = styled(LinearProgress)((theme) => ({
-	position: 'absolute',
-	top: '3px',
-	left: '4px',
-	width: '497px',
-	height: '30px',
-	borderRadius: '30px',
-	background: '#F7F7F7',
-	border: '2px solid #E2E2E2',
-	'.MuiLinearProgress-bar': {
-		background: 'linear-gradient(90deg, #7D66FF 0.63%, #40BF82 100%)',
+const CustomLinearProgressInner = styled(LinearProgress)(
+	({ status, theme }) => ({
+		position: 'absolute',
+		top: '3px',
+		left: '4px',
+		width: '497px',
+		height: '30px',
 		borderRadius: '30px',
-		'&::after': {
-			position: 'absolute',
-			content: '""',
-			right: '-10px',
-			top: '-5px',
-			background: `transparent`,
-			width: '40px',
-			height: '40px',
-			zIndex: 1,
+		background: '#F7F7F7',
+		border: '2px solid #E2E2E2',
+		'.MuiLinearProgress-bar': {
+			background: `${
+				status === 'fail'
+					? theme.color.error
+					: 'linear-gradient(90deg, #7D66FF 0.63%, #40BF82 100%)'
+			}`,
+			borderRadius: '30px',
+			'&::after': {
+				position: 'absolute',
+				content: '""',
+				right: '-10px',
+				top: '-5px',
+				background: `transparent`,
+				width: '40px',
+				height: '40px',
+				zIndex: 1,
+			},
 		},
-	},
-}));
+	})
+);
 
-const SimpleProgess = ({ progess }) => {
+const SimpleProgess = ({ progess, state }) => {
+	const status = useMemo(() => state.paySuccess, [state]);
 	return (
 		<Box
 			sx={{
@@ -56,10 +63,12 @@ const SimpleProgess = ({ progess }) => {
 		>
 			<CustomLinearProgressInner
 				value={Number(progess)}
+				status={status}
 				variant="determinate"
 			/>
 			<CustomLinearProgressOut
 				value={Number(progess) <= 0 ? 7 : Number(progess)}
+				status={status}
 				variant="determinate"
 			/>
 		</Box>

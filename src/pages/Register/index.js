@@ -1,6 +1,6 @@
 import { Box, Stack, Typography, styled } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useReducer, useState } from 'react';
 import CommonPage from '../../components/CommonUI/CommonPage';
 import { useParams } from 'react-router-dom';
 import StepOne from './StepOne';
@@ -23,7 +23,21 @@ export const TypographyInfo = styled(Typography)(({ theme, sx }) => ({
 	...sx,
 }));
 
+const initState = {
+	paySuccess: '', // pending success fail
+};
+
+const reducer = (state, action) => {
+	switch (action.type) {
+		case 'setPaySuccess':
+			return { ...state, paySuccess: action.payload };
+		default:
+			return { ...state };
+	}
+};
+
 const Register = () => {
+	const [state, dispatch] = useReducer(reducer, initState);
 	const params = useParams();
 	const [step, setStep] = useState(1);
 
@@ -70,9 +84,9 @@ const Register = () => {
 					}}
 				>
 					{step === 1 ? (
-						<StepOne />
+						<StepOne onNext={nextPage} />
 					) : step === 2 ? (
-						<StepTwo />
+						<StepTwo state={state} dispatch={dispatch} />
 					) : step === 3 ? (
 						<StepThree />
 					) : null}
@@ -84,19 +98,21 @@ const Register = () => {
 						sx={{ mt: '20px' }}
 					>
 						{step > 1 ? (
-							<LoadingButton
-								variant="outlined"
-								onClick={backToAfterStep}
-								sx={(theme) => ({
-									mr: theme.spacing(2),
-								})}
-							>
-								Back
-							</LoadingButton>
+							<>
+								<LoadingButton
+									variant="outlined"
+									onClick={backToAfterStep}
+									sx={(theme) => ({
+										mr: theme.spacing(2),
+									})}
+								>
+									Back
+								</LoadingButton>
+								<LoadingButton variant="contained" onClick={nextPage}>
+									Next
+								</LoadingButton>
+							</>
 						) : null}
-						<LoadingButton variant="contained" onClick={nextPage}>
-							Next
-						</LoadingButton>
 					</Stack>
 				) : null}
 			</CommonPage>

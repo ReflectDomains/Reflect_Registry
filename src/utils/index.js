@@ -9,8 +9,14 @@ export const splitAddress = (address, start = 5, end = -4) => {
 	);
 };
 
-export const ensHashName = (name = '') =>
-	(name && ethers.utils.namehash(name)) || '';
+export const ensHashName = (name = '') => {
+	// Ensures the ENS name is a fully qualified domain name (FQDN)
+	const normalizedEnsName = ethers.utils.nameprep(name);
+
+	// Compute the name hash using the `ethers.js` built-in function
+	const namehash = ethers.utils.namehash(normalizedEnsName);
+	return namehash;
+};
 
 export const parseUnitsWithDecimals = (n, dec = '') =>
 	ethers.utils.parseUnits((n || '').toString(), dec);
