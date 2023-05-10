@@ -1,0 +1,335 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "contract BaseRegistrar",
+				"name": "_base",
+				"type": "address"
+			},
+			{
+				"internalType": "contract LaunchTld",
+				"name": "_launchTld",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_platformPercentage",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_platformWallet",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "label",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "cost",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "expires",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "permanent",
+				"type": "bool"
+			}
+		],
+		"name": "NameRegistered",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "label",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "cost",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "expires",
+				"type": "uint256"
+			}
+		],
+		"name": "NameRenewed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "launchTld",
+				"type": "address"
+			}
+		],
+		"name": "NewLaunchTld",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "tld",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "SubdomainFee",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "payment",
+				"type": "address"
+			}
+		],
+		"name": "SubdomainFee",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "tld",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tldOwnerFee",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "payment",
+				"type": "address"
+			}
+		],
+		"name": "TldOwnerFee",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "name", "type": "string" },
+			{ "internalType": "string", "name": "tld", "type": "string" }
+		],
+		"name": "available",
+		"outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "base",
+		"outputs": [
+			{
+				"internalType": "contract BaseRegistrar",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "isOwner",
+		"outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "launchTld",
+		"outputs": [
+			{ "internalType": "contract LaunchTld", "name": "", "type": "address" }
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "platformPercentage",
+		"outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "platformWallet",
+		"outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "name", "type": "string" },
+			{ "internalType": "string", "name": "tld", "type": "string" },
+			{ "internalType": "address", "name": "owner", "type": "address" },
+			{ "internalType": "uint256", "name": "duration", "type": "uint256" },
+			{ "internalType": "address", "name": "payment", "type": "address" }
+		],
+		"name": "register",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "name", "type": "string" },
+			{ "internalType": "string", "name": "tld", "type": "string" },
+			{ "internalType": "address", "name": "owner", "type": "address" },
+			{ "internalType": "uint256", "name": "duration", "type": "uint256" },
+			{ "internalType": "address", "name": "payment", "type": "address" },
+			{ "internalType": "address", "name": "resolver", "type": "address" },
+			{ "internalType": "address", "name": "addr", "type": "address" }
+		],
+		"name": "registerWithConfig",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "name", "type": "string" },
+			{ "internalType": "string", "name": "tld", "type": "string" },
+			{ "internalType": "uint256", "name": "duration", "type": "uint256" },
+			{ "internalType": "address", "name": "payment", "type": "address" }
+		],
+		"name": "renew",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{ "internalType": "string", "name": "name", "type": "string" },
+			{ "internalType": "bytes32", "name": "baseNode", "type": "bytes32" },
+			{ "internalType": "uint256", "name": "duration", "type": "uint256" },
+			{ "internalType": "address", "name": "payment", "type": "address" }
+		],
+		"name": "rentPrice",
+		"outputs": [
+			{ "internalType": "uint256", "name": "", "type": "uint256" },
+			{ "internalType": "bool", "name": "", "type": "bool" }
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract LaunchTld",
+				"name": "_launchTld",
+				"type": "address"
+			}
+		],
+		"name": "setLaunchTld",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{ "internalType": "address", "name": "newOwner", "type": "address" }
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [{ "internalType": "string", "name": "name", "type": "string" }],
+		"name": "valid",
+		"outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+		"stateMutability": "pure",
+		"type": "function"
+	}
+]
