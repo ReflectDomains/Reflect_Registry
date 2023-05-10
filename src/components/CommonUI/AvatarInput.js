@@ -3,6 +3,8 @@ import CommonAvatar from '../CommonAvatar';
 import { LoadingButton } from '@mui/lab';
 import { Box, InputLabel, Stack } from '@mui/material';
 import { useCallback, useRef, useState } from 'react';
+import { getUploadOSSUrl, uploadAvatar } from '../../api/profile';
+import { toast } from 'react-toastify';
 
 const AvatarInput = ({
 	label,
@@ -15,6 +17,19 @@ const AvatarInput = ({
 	const { address } = useAccount();
 	const inputRef = useRef(null);
 	const [uploading, setUploading] = useState(false);
+
+	const handleUpload = useCallback(async ({ file, type }) => {
+		try {
+			const ossResp = await getUploadOSSUrl({ content_type: type });
+			if (ossResp?.code === 0 && ossResp?.data) {
+				await uploadAvatar({ url: ossResp.data.url, file });
+				return true;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+	}, []);
 
 	const onFileChange = useCallback(
 		async (event) => {
@@ -32,33 +47,35 @@ const AvatarInput = ({
 				const URL = window.URL || window.webkitURL;
 				const imgURL = URL.createObjectURL(file);
 
-				console.log('imgURL:', imgURL);
-				console.log('type:', type);
-				//upload image
-				// const res = await uploadToIpfs(file, type, false);
+				try {
+					//upload image
+					const res = await handleUpload({ file, type });
 
-				if (imgURL) {
-					onSuccess(inputRef, imgURL);
-				} else {
+					if (res) {
+						onSuccess(inputRef, imgURL, file);
+					}
+				} catch (error) {
+					toast.error('upload fail');
 					onError(inputRef);
+					setUploading(false);
+				} finally {
+					setUploading(false);
 				}
-				setUploading(false);
 			}
-			setUploading(false);
 		},
-		[onSuccess, onError]
+		[onSuccess, onError, handleUpload]
 	);
 
 	return (
 		<Box>
 			<InputLabel sx={labelSx}>{label}</InputLabel>
 			<Stack direction="row" alignItems="center" spacing={2} mt={1}>
-				<CommonAvatar scope={100} avatar={avatar} address={address} />
+				<CommonAvatar avatar={avatar} scope={100} address={address} />
 				<LoadingButton component="label" loading={uploading}>
 					Replace
 					<input
 						hidden
-						accept="image/*"
+						accept="image/jpeg,image/png"
 						type="file"
 						name="avatar"
 						id="icon-button-file"

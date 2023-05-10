@@ -22,32 +22,37 @@ const SocialLink = styled(Link)(({ theme }) => ({
 	},
 }));
 
-const SocialMedia = () => {
+const SocialMedia = ({ discord, twitter, medium, telegram }) => {
 	return (
 		<Stack direction="row" justifyContent="center" spacing={1}>
-			<Tooltip title="discord" placement="top">
-				<SocialLink>
-					<DiscordIcon />
-				</SocialLink>
-			</Tooltip>
-
-			<Tooltip title="twitter" placement="top">
-				<SocialLink>
-					<TwitterIcon />
-				</SocialLink>
-			</Tooltip>
-
-			<Tooltip title="medium" placement="top">
-				<SocialLink>
-					<MediumIcon />
-				</SocialLink>
-			</Tooltip>
-
-			<Tooltip title="telegram" placement="top">
-				<SocialLink>
-					<TGIcon />
-				</SocialLink>
-			</Tooltip>
+			{discord ?? (
+				<Tooltip title={discord} placement="top">
+					<SocialLink>
+						<DiscordIcon />
+					</SocialLink>
+				</Tooltip>
+			)}
+			{twitter ?? (
+				<Tooltip title={twitter} placement="top">
+					<SocialLink>
+						<TwitterIcon />
+					</SocialLink>
+				</Tooltip>
+			)}
+			{medium ?? (
+				<Tooltip title={medium} placement="top">
+					<SocialLink>
+						<MediumIcon />
+					</SocialLink>
+				</Tooltip>
+			)}
+			{telegram ?? (
+				<Tooltip title={telegram} placement="top">
+					<SocialLink>
+						<TGIcon />
+					</SocialLink>
+				</Tooltip>
+			)}
 		</Stack>
 	);
 };

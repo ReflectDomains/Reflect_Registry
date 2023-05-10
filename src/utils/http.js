@@ -14,15 +14,14 @@ const http = axios.create({
 http.interceptors.request.use(
 	(config) => {
 		// token
-		if (store.getState().reflect_subdomain_loginInfo.token) {
+		if (store.getState().reflect_loginInfo.token) {
 			config.headers.Authorization = `Bearer ${
-				store.getState().reflect_subdomain_loginInfo.token
+				store.getState().reflect_loginInfo.token
 			}`;
 		}
 
 		if (config.url.includes('s3.amazonaws.com')) {
-			console.log('in----')
-			config.headers['Content-Type'] = config.contentType??'image/png';
+			config.headers['Content-Type'] = config.contentType ?? 'image/png';
 			delete config.headers.Authorization;
 		}
 
