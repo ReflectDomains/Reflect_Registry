@@ -15,7 +15,7 @@ import { PlusIcon, RemoveIcon } from '../../assets';
 import useApprove from '../../hooks/useApprove';
 import { tokenForContract } from '../../config/profilePageSetting';
 import { useParams } from 'react-router-dom';
-import { useContractRead } from 'wagmi';
+import { useAccount, useContractRead } from 'wagmi';
 import { baseRegistrarImplementationABI, registerABI } from '../../config/ABI';
 import {
 	BaseRegistrarImplementation,
@@ -83,6 +83,7 @@ const StyledFormControlLabel = styled((props) => (
 
 const StepOne = ({ nextPage }) => {
 	const params = useParams();
+	const { address } = useAccount();
 
 	const [checked, setChecked] = useState('usdt');
 	const [isPaid, setIsPaid] = useState(false);
@@ -117,9 +118,17 @@ const StepOne = ({ nextPage }) => {
 		'args'
 	);
 
+	const { data: available } = useContractRead({
+		abi: registerABI,
+		address: registerContract,
+		functionName: 'available',
+		args: [secondDomain, topDomain],
+	});
+
 	const { data: rentPrice } = useContractRead({
 		abi: registerABI,
 		address: registerContract,
+		functionName: 'rentPrice',
 		args: [
 			secondDomain,
 			ensHashName(topDomain),
@@ -127,7 +136,7 @@ const StepOne = ({ nextPage }) => {
 			tokenForContract['USDT'],
 		],
 	});
-	console.log(rentPrice, 'rentPrice');
+	console.log(rentPrice, 'rentPrice', registerContract);
 
 	const changeRadio = useCallback((e) => {
 		setChecked(e.target.value);
@@ -219,6 +228,7 @@ const StepOne = ({ nextPage }) => {
 					loading={btnLoading}
 					variant="contained"
 					onClick={approveOrPay}
+					disabled={!available}
 				>
 					{isApprove ? `pay 10 ${checked}` : 'Approve'}
 				</LoadingButton>

@@ -141,10 +141,16 @@
 				"type": "bytes32"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "uint256",
 				"name": "SubdomainFee",
 				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "label",
+				"type": "bytes32"
 			},
 			{
 				"indexed": false,
@@ -166,10 +172,16 @@
 				"type": "bytes32"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "uint256",
 				"name": "tldOwnerFee",
 				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "label",
+				"type": "bytes32"
 			},
 			{
 				"indexed": false,
@@ -300,7 +312,7 @@
 			{ "internalType": "uint256", "name": "", "type": "uint256" },
 			{ "internalType": "bool", "name": "", "type": "bool" }
 		],
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
