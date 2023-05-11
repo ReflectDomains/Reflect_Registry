@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import {
 	Box,
@@ -15,7 +15,15 @@ import { PlusIcon, RemoveIcon } from '../../assets';
 import useApprove from '../../hooks/useApprove';
 import { tokenForContract } from '../../config/profilePageSetting';
 import { useParams } from 'react-router-dom';
-import { useAccount, useContractRead } from 'wagmi';
+import {
+	useAccount,
+	useContract,
+	useContractRead,
+	useContractWrite,
+	useFeeData,
+	useProvider,
+	useToken,
+} from 'wagmi';
 import { baseRegistrarImplementationABI, registerABI } from '../../config/ABI';
 import {
 	BaseRegistrarImplementation,
@@ -23,6 +31,10 @@ import {
 } from '../../config/contract';
 import { ensHashName } from '../../utils';
 import useWriteApprove from '../../hooks/useWriteApprove';
+import { formatUnitsWitheDecimals } from '../../utils';
+import { BigNumber } from 'ethers';
+
+const secondForYears = BigNumber.from(31536000);
 
 const TypographyDes = styled(Typography)(({ theme, sx }) => ({
 	color: theme.color.mentionColor,
@@ -95,6 +107,9 @@ const StepOne = ({ nextPage }) => {
 		setIsApprove(true);
 	}, [setIsApprove]);
 
+	const { data: tokenData } = useToken({ address: tokenForContract['USDT'] });
+	const decimals = useMemo(() => tokenData?.decimals, [tokenData]);
+
 	const { approve, loading } = useWriteApprove({
 		tokenAddress: tokenForContract['USDT'],
 		onSuccess: approveSuccess,
@@ -107,16 +122,9 @@ const StepOne = ({ nextPage }) => {
 	}, [params]);
 	const btnLoading = useMemo(() => loading, [loading]);
 
-	const durationSeoncd = useMemo(() => years * 365 * 24 * 60, [years]);
-	console.log(
-		[
-			secondDomain,
-			ensHashName(topDomain),
-			durationSeoncd,
-			tokenForContract['USDT'],
-		],
-		'args'
-	);
+	const durationSeoncd = useMemo(() => {
+		return BigNumber.from(years).mul(secondForYears).toString();
+	}, [years]);
 
 	const { data: available } = useContractRead({
 		abi: registerABI,
@@ -125,7 +133,7 @@ const StepOne = ({ nextPage }) => {
 		args: [secondDomain, topDomain],
 	});
 
-	const { data: rentPrice } = useContractRead({
+	const { data: rentPriceArry } = useContractRead({
 		abi: registerABI,
 		address: registerContract,
 		functionName: 'rentPrice',
@@ -136,7 +144,57 @@ const StepOne = ({ nextPage }) => {
 			tokenForContract['USDT'],
 		],
 	});
-	console.log(rentPrice, 'rentPrice', registerContract);
+
+	const price = useMemo(
+		() =>
+			formatUnitsWitheDecimals(rentPriceArry?.[0].toString() || 0, decimals),
+		[rentPriceArry, decimals]
+	);
+
+	const [fee, setFee] = useState(0);
+
+	const { data: gasPrice } = useFeeData();
+	const provide = useProvider();
+	const contract = useContract({
+		address: registerContract,
+		abi: registerABI,
+		signerOrProvider: provide,
+	});
+
+	const args = useMemo(() => {
+		return [
+			secondDomain,
+			topDomain,
+			address,
+			durationSeoncd,
+			tokenForContract['USDT'],
+		];
+	}, [secondDomain, topDomain, address, durationSeoncd]);
+
+	const getGas = useCallback(async () => {
+		try {
+			const estimateGas = await contract.estimateGas.register(...args, {
+				from: address,
+			});
+			setFee(estimateGas.toString());
+		} catch (error) {
+			console.log(error, 'gas');
+		}
+	}, [contract, args, address]);
+
+	const estFee = useMemo(() => {
+		if (!gasPrice) return 0;
+		const {
+			formatted: { gasPrice: price },
+		} = gasPrice;
+		const mul = price * fee;
+		return mul > 0 ? formatUnitsWitheDecimals(mul.toString(), 18) : 0;
+	}, [fee, gasPrice]);
+
+	const { write, prepareSuccess, writeStartSuccess } = useContractWrite({
+		functionName: 'register',
+		args: [...args],
+	});
 
 	const changeRadio = useCallback((e) => {
 		setChecked(e.target.value);
@@ -146,17 +204,29 @@ const StepOne = ({ nextPage }) => {
 		if (!isApprove) {
 			approve();
 		} else {
-			// paid
+			write?.();
+		}
+	}, [isApprove, approve, write]);
+
+	useEffect(() => {
+		if (prepareSuccess) {
+			getGas();
+		}
+	}, [getGas, prepareSuccess]);
+
+	useEffect(() => {
+		if (writeStartSuccess) {
 			nextPage();
 		}
-	}, [isApprove, approve, nextPage]);
+	}, [writeStartSuccess, nextPage]);
+
 	return (
 		<>
 			<TypographyInfo sx={{ mb: '10px' }}>Supported Tokens:</TypographyInfo>
 			<RadioGroup row onChange={changeRadio}>
 				<StyledFormControlLabel
 					value="usdt"
-					label="10 USDT"
+					label={`${price} USDT`}
 					checked={checked === 'usdt'}
 					control={<Radio999 />}
 				/>
@@ -191,11 +261,11 @@ const StepOne = ({ nextPage }) => {
 			</ControlYears>
 
 			<TypographyDes sx={{ mt: '30px' }}>
-				-Registration fee:10 {checked?.toUpperCase()}
+				-Registration fee:{price} {checked?.toUpperCase()}
 			</TypographyDes>
-			<TypographyDes>-Est.network fee:0.0437ETH </TypographyDes>
+			<TypographyDes>-Est.network fee:{estFee}ETH </TypographyDes>
 			<TypographyDes>
-				-Estimated total:0.0437ETH+10 {checked?.toUpperCase()}{' '}
+				-Estimated total:{estFee}ETH+{price} {checked?.toUpperCase()}{' '}
 			</TypographyDes>
 			<TypographyDes sx={{ mb: '30px' }}>
 				-2.5%service fees is included

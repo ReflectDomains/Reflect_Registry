@@ -79,7 +79,6 @@ const Register = () => {
 					sx={{
 						backgroundColor: step < 4 ? '#F7F7F7' : '#fff',
 						borderRadius: '10px',
-						width: '100%',
 						padding: '20px',
 					}}
 				>
