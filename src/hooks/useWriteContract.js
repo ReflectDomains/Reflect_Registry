@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { subdomainABI } from '../config/ABI';
+import { useCallback, useEffect, useMemo } from 'react';
+import { registerABI } from '../config/ABI';
 import {
 	useAccount,
 	useContractWrite,
@@ -17,6 +17,7 @@ const useWriteContract = ({
 	onSetteled,
 	contractAddress = '',
 	ABIJSON = null,
+	setTxHash,
 }) => {
 	const { address } = useAccount();
 	const successFn = useCallback(() => {
@@ -38,7 +39,7 @@ const useWriteContract = ({
 		refetch,
 	} = usePrepareContractWrite({
 		address: contractAddress || registerContract,
-		abi: ABIJSON || subdomainABI,
+		abi: ABIJSON || registerABI,
 		functionName: functionName,
 		args: [...args],
 		enabled: enabled && address,
@@ -60,17 +61,21 @@ const useWriteContract = ({
 		isSuccess: writeStartSuccess,
 	} = useContractWrite(config);
 
+	useEffect(() => {
+		if (data && data.hash) {
+			setTxHash?.(data.hash);
+		}
+	}, [data, setTxHash]);
+
 	const { isLoading: waitingLoading, isSuccess } = useWaitForTransaction({
 		hash: data?.hash,
 		onSuccess() {
-			console.log('success');
 			successFn();
 		},
 		onError() {
 			errorFn();
 		},
 		onSettled() {
-			console.log('test');
 			settledFn();
 		},
 	});

@@ -19,20 +19,20 @@ import {
 	useAccount,
 	useContract,
 	useContractRead,
-	useContractWrite,
 	useFeeData,
 	useProvider,
 	useToken,
 } from 'wagmi';
 import { baseRegistrarImplementationABI, registerABI } from '../../config/ABI';
 import {
-	BaseRegistrarImplementation,
+	baseRegistrarImplementationContract,
 	registerContract,
 } from '../../config/contract';
 import { ensHashName } from '../../utils';
 import useWriteApprove from '../../hooks/useWriteApprove';
 import { formatUnitsWitheDecimals } from '../../utils';
 import { BigNumber } from 'ethers';
+import useWriteContract from '../../hooks/useWriteContract';
 
 const secondForYears = BigNumber.from(31536000);
 
@@ -93,22 +93,23 @@ const StyledFormControlLabel = styled((props) => (
 	},
 }));
 
-const StepOne = ({ nextPage }) => {
+const StepOne = ({ onNext, dispatch }) => {
 	const params = useParams();
 	const { address } = useAccount();
 
 	const [checked, setChecked] = useState('usdt');
-	const [isPaid, setIsPaid] = useState(false);
 	const [years, setYears] = useState(1);
 
-	const { isApprove, setIsApprove } = useApprove([tokenForContract['USDT']]);
+	const { data: tokenData } = useToken({ address: tokenForContract['USDT'] });
+	const decimals = useMemo(() => tokenData?.decimals, [tokenData]);
+
+	const { isApprove, setIsApprove, readLoading } = useApprove([
+		tokenForContract['USDT'],
+	]);
 
 	const approveSuccess = useCallback(() => {
 		setIsApprove(true);
 	}, [setIsApprove]);
-
-	const { data: tokenData } = useToken({ address: tokenForContract['USDT'] });
-	const decimals = useMemo(() => tokenData?.decimals, [tokenData]);
 
 	const { approve, loading } = useWriteApprove({
 		tokenAddress: tokenForContract['USDT'],
@@ -120,7 +121,18 @@ const StepOne = ({ nextPage }) => {
 			secondDomain: params?.name?.split('.')?.[0],
 		};
 	}, [params]);
-	const btnLoading = useMemo(() => loading, [loading]);
+
+	const { data: nameExpires } = useContractRead({
+		abi: baseRegistrarImplementationABI,
+		address: baseRegistrarImplementationContract,
+		functionName: 'nameExpires',
+		args: [ensHashName(topDomain)],
+	});
+
+	const btnLoading = useMemo(
+		() => loading || readLoading,
+		[loading, readLoading]
+	);
 
 	const durationSeoncd = useMemo(() => {
 		return BigNumber.from(years).mul(secondForYears).toString();
@@ -191,9 +203,18 @@ const StepOne = ({ nextPage }) => {
 		return mul > 0 ? formatUnitsWitheDecimals(mul.toString(), 18) : 0;
 	}, [fee, gasPrice]);
 
-	const { write, prepareSuccess, writeStartSuccess } = useContractWrite({
+	const setTxHash = useCallback(
+		(hash) => {
+			dispatch({ type: 'setHash', payload: hash });
+		},
+		[dispatch]
+	);
+
+	const { write, prepareSuccess, writeStartSuccess } = useWriteContract({
 		functionName: 'register',
 		args: [...args],
+		enabled: available && isApprove,
+		setTxHash: setTxHash,
 	});
 
 	const changeRadio = useCallback((e) => {
@@ -204,21 +225,22 @@ const StepOne = ({ nextPage }) => {
 		if (!isApprove) {
 			approve();
 		} else {
+			dispatch({ type: 'setPaySuccess', payload: 'pending' });
 			write?.();
 		}
 	}, [isApprove, approve, write]);
 
 	useEffect(() => {
-		if (prepareSuccess) {
+		if (prepareSuccess && available) {
 			getGas();
 		}
-	}, [getGas, prepareSuccess]);
+	}, [getGas, prepareSuccess, available]);
 
 	useEffect(() => {
 		if (writeStartSuccess) {
-			nextPage();
+			onNext?.();
 		}
-	}, [writeStartSuccess, nextPage]);
+	}, [writeStartSuccess, onNext]);
 
 	return (
 		<>
@@ -270,7 +292,7 @@ const StepOne = ({ nextPage }) => {
 			<TypographyDes sx={{ mb: '30px' }}>
 				-2.5%service fees is included
 			</TypographyDes>
-			{isPaid ? (
+			{!available ? (
 				<Stack
 					direction="row"
 					alignItems="center"
@@ -300,7 +322,7 @@ const StepOne = ({ nextPage }) => {
 					onClick={approveOrPay}
 					disabled={!available}
 				>
-					{isApprove ? `pay 10 ${checked}` : 'Approve'}
+					{isApprove ? `pay ${price} ${checked}` : 'Approve'}
 				</LoadingButton>
 			)}
 		</>

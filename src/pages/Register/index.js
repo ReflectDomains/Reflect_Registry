@@ -8,6 +8,7 @@ import StepTwo from './StepTwo';
 import StepThree from './StepThree';
 import LastStep from './LastStep';
 import StepAndCircleProcess from './StepAndCircleProcess';
+import { useWaitForTransaction } from 'wagmi';
 
 export const TypographySubtitle = styled(Typography)(({ theme, sx }) => ({
 	fontSize: '20px',
@@ -31,6 +32,8 @@ const reducer = (state, action) => {
 	switch (action.type) {
 		case 'setPaySuccess':
 			return { ...state, paySuccess: action.payload };
+		case 'setHash':
+			return { ...state, txHash: action.payload };
 		default:
 			return { ...state };
 	}
@@ -52,6 +55,16 @@ const Register = () => {
 			setStep(parseInt(step - 1));
 		}
 	}, [step]);
+
+	const { isLoading, isError } = useWaitForTransaction({
+		hash: state?.txHash,
+		onSuccess: () => {
+			dispatch({ type: 'setPaySuccess', payload: 'success' });
+		},
+		onError: () => {
+			dispatch({ type: 'setPaySuccess', payload: 'fail' });
+		},
+	});
 
 	return (
 		<Box>
@@ -83,7 +96,7 @@ const Register = () => {
 					}}
 				>
 					{step === 1 ? (
-						<StepOne onNext={nextPage} />
+						<StepOne onNext={nextPage} dispatch={dispatch} />
 					) : step === 2 ? (
 						<StepTwo state={state} dispatch={dispatch} />
 					) : step === 3 ? (
@@ -104,10 +117,15 @@ const Register = () => {
 									sx={(theme) => ({
 										mr: theme.spacing(2),
 									})}
+									disabled={isError}
 								>
 									Back
 								</LoadingButton>
-								<LoadingButton variant="contained" onClick={nextPage}>
+								<LoadingButton
+									loading={isLoading}
+									variant="contained"
+									onClick={nextPage}
+								>
 									Next
 								</LoadingButton>
 							</>

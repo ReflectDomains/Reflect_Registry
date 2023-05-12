@@ -32,10 +32,10 @@ const ContentBar = memo(({ leftText, rightText }) => {
 });
 
 const StepTwo = ({ state }) => {
-	const progess = useMemo(
-		() => (state.paySuccess === 'pending' || 'fail' ? 50 : 100),
-		[state]
-	);
+	const progess = useMemo(() => {
+		return state.paySuccess === 'success' ? 100 : 50;
+	}, [state]);
+
 	const isFailed = useMemo(() => state.paySuccess === 'fail', [state]);
 	return (
 		<Stack direction="column" alignItems="center" justifyContent="center">
