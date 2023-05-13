@@ -7,12 +7,17 @@ import {
 	Stack,
 	Typography,
 	styled,
+	CircularProgress,
 } from '@mui/material';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useNavigate } from 'react-router-dom';
+import { useContractRead } from 'wagmi';
+import { registerABI, tldABI } from '../../config/ABI';
+import { registerContract, tldContract } from '../../config/contract';
+import { debounce, ensHashName, isDomainRegex, zeroAddress } from '../../utils';
 
 const SearchWrapper = styled(Box)(() => ({
 	width: '600px',
@@ -76,35 +81,65 @@ const RegisterStatus = styled(Box)(({ theme, ...props }) => ({
 	fontWeight: 700,
 }));
 
-const list = [
-	{
-		name: 'Registered.reflect.eth',
-		status: 'Registered',
-	},
-	{
-		name: 'Available.reflect.eth',
-		status: 'Available',
-	},
-
-	{
-		name: 'Unsupported.reflect.eth',
-		status: 'Unsupported',
-	},
-];
-
 const SearchInput = () => {
 	const navigate = useNavigate();
-	const [searchValue, setSearchValue] = useState();
+	const [searchValue, setSearchValue] = useState('');
 	const [isFocus, setFocus] = useState(false);
 
-	const handleChange = useCallback((e) => {
-		const value = e.target.value;
-		setSearchValue(value);
-	}, []);
+	const [searchName, setSearchName] = useState('');
+
+	const validName = useMemo(() => {
+		return isDomainRegex(searchName);
+	}, [searchName]);
+
+	const { data, tldLoading } = useContractRead({
+		functionName: 'getTldToOwner',
+		args: [ensHashName(searchName.split('.')[1])],
+		address: tldContract,
+		abi: tldABI,
+		enabled: searchName && validName,
+	});
+
+	const { data: available, isLoading } = useContractRead({
+		abi: registerABI,
+		address: registerContract,
+		functionName: 'available',
+		args: [searchName.split('.')[0], searchName.split('.')[1]],
+		enabled: validName && data,
+		cacheOnBlock: true,
+	});
+
+	// eslint-disable-next-line
+	const debounceInputChange = useCallback(
+		debounce((value) => {
+			setSearchName(value);
+		}, 500),
+		[]
+	);
+
+	const handleChange = useCallback(
+		(e) => {
+			const value = e.target.value;
+			setSearchValue(value);
+			debounceInputChange(value);
+		},
+		[debounceInputChange]
+	);
 
 	const clearSearchValue = useCallback(() => {
 		setSearchValue('');
+		setSearchName('');
 	}, []);
+
+	const judgeOwnerStatus = useCallback(() => {
+		return isLoading || tldLoading
+			? 'loading'
+			: data && data.owner === zeroAddress
+			? 'UnSupport'
+			: available
+			? 'Available'
+			: 'Registered';
+	}, [isLoading, available, tldLoading, data]);
 
 	return (
 		<SearchWrapper>
@@ -135,33 +170,42 @@ const SearchInput = () => {
 
 			<Collapse in={isFocus}>
 				<PopoverList>
-					{list.map((item, index) => (
-						<PopoverListItem
-							key={item.name}
-							onClick={() => {
-								console.log(item.status, 'status');
-								if (item.status === 'Available') {
-									console.log(item.status, 'navigate');
-									navigate(`/register/${item.name}`);
-								}
-							}}
-						>
-							<ListItemTitle>{item.name}</ListItemTitle>
-							<Stack
-								direction="row"
-								alignItems="center"
-								justifyContent="center"
-								spacing={1}
-							>
-								<RegisterStatus status={item.status}>
-									{item.status}
-								</RegisterStatus>
-								<ChevronRightIcon
-									sx={(theme) => ({ color: theme.color.mentionColor })}
-								/>
-							</Stack>
-						</PopoverListItem>
-					))}
+					<PopoverListItem
+						valid={validName.toString()}
+						onClick={() => {
+							if (judgeOwnerStatus() === 'Available') {
+								const domainPartList = searchValue.split('.');
+								navigate(
+									`/register/${domainPartList[0]}-${domainPartList[1]}.eth`
+								);
+							}
+						}}
+					>
+						{validName ? (
+							<>
+								<ListItemTitle>{searchValue}</ListItemTitle>
+								<Stack
+									direction="row"
+									alignItems="center"
+									justifyContent="center"
+									spacing={1}
+								>
+									{judgeOwnerStatus() !== 'loading' ? (
+										<RegisterStatus status={judgeOwnerStatus()}>
+											{judgeOwnerStatus()}
+										</RegisterStatus>
+									) : (
+										<CircularProgress size={14} thickness={7} />
+									)}
+									<ChevronRightIcon
+										sx={(theme) => ({ color: theme.color.mentionColor })}
+									/>
+								</Stack>
+							</>
+						) : (
+							<ListItemTitle>Invalid name(eg:your_name.domain)</ListItemTitle>
+						)}
+					</PopoverListItem>
 				</PopoverList>
 			</Collapse>
 		</SearchWrapper>

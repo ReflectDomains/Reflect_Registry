@@ -9,6 +9,10 @@ export const splitAddress = (address, start = 5, end = -4) => {
 	);
 };
 
+export const isDomainRegex = (str) => {
+	return /^[^\W_]{3,}\.[^\W_]*$/.test(str);
+};
+
 export const ensHashName = (name = '') => {
 	// Ensures the ENS name is a fully qualified domain name (FQDN)
 	const normalizedEnsName = ethers.utils.nameprep(name);
