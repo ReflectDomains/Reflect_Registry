@@ -1,6 +1,6 @@
 import { Box, Stack, Typography, styled } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
-import { memo, useCallback, useReducer, useState } from 'react';
+import { memo, useCallback, useMemo, useReducer, useState } from 'react';
 import CommonPage from '../../components/CommonUI/CommonPage';
 import { useParams } from 'react-router-dom';
 import StepOne from './StepOne';
@@ -9,6 +9,7 @@ import StepThree from './StepThree';
 import LastStep from './LastStep';
 import StepAndCircleProcess from './StepAndCircleProcess';
 import { useWaitForTransaction } from 'wagmi';
+import moment from 'moment';
 
 export const TypographySubtitle = styled(Typography)(({ theme, sx }) => ({
 	fontSize: '20px',
@@ -26,6 +27,7 @@ export const TypographyInfo = styled(Typography)(({ theme, sx }) => ({
 
 const initState = {
 	paySuccess: '', // pending success fail
+	years: 1,
 };
 
 const reducer = (state, action) => {
@@ -34,6 +36,8 @@ const reducer = (state, action) => {
 			return { ...state, paySuccess: action.payload };
 		case 'setHash':
 			return { ...state, txHash: action.payload };
+		case 'setYears':
+			return { ...state, years: action.payload };
 		default:
 			return { ...state };
 	}
@@ -66,6 +70,13 @@ const Register = () => {
 		},
 	});
 
+	const expiryData = useMemo(
+		() => new moment().add(1, 'year').format('YYYY-MM-DD'),
+		[]
+	);
+
+	const days = useMemo(() => parseInt(state.years * 365), [state.years]);
+
 	return (
 		<Box>
 			<CommonPage title="Registration">
@@ -74,7 +85,7 @@ const Register = () => {
 					Subname: {params?.name}
 				</TypographyInfo>
 				<TypographyInfo sx={{ mt: '10px' }}>
-					Expiry:until 2025.x.x (xx days)
+					Expiry:until {expiryData} ({days} days)
 				</TypographyInfo>
 				<TypographySubtitle sx={{ marginTop: '30px' }}>
 					Process

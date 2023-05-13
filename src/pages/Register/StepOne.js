@@ -17,17 +17,15 @@ import { tokenForContract } from '../../config/profilePageSetting';
 import { useParams } from 'react-router-dom';
 import {
 	useAccount,
+	useBalance,
 	useContract,
 	useContractRead,
 	useFeeData,
 	useProvider,
 	useToken,
 } from 'wagmi';
-import { baseRegistrarImplementationABI, registerABI } from '../../config/ABI';
-import {
-	baseRegistrarImplementationContract,
-	registerContract,
-} from '../../config/contract';
+import { registerABI } from '../../config/ABI';
+import { registerContract } from '../../config/contract';
 import { ensHashName } from '../../utils';
 import useWriteApprove from '../../hooks/useWriteApprove';
 import { formatUnitsWitheDecimals } from '../../utils';
@@ -96,6 +94,11 @@ const StyledFormControlLabel = styled((props) => (
 const StepOne = ({ onNext, dispatch }) => {
 	const params = useParams();
 	const { address } = useAccount();
+	const { data: balanceData } = useBalance({
+		address: address,
+		token: tokenForContract['USDT'],
+	});
+	const balance = useMemo(() => balanceData?.formatted || 0, [balanceData]);
 
 	const [checked, setChecked] = useState('usdt');
 	const [years, setYears] = useState(1);
@@ -121,13 +124,6 @@ const StepOne = ({ onNext, dispatch }) => {
 			secondDomain: params?.name?.split('.')?.[0],
 		};
 	}, [params]);
-
-	const { data: nameExpires } = useContractRead({
-		abi: baseRegistrarImplementationABI,
-		address: baseRegistrarImplementationContract,
-		functionName: 'nameExpires',
-		args: [ensHashName(topDomain)],
-	});
 
 	const btnLoading = useMemo(
 		() => loading || readLoading,
@@ -162,6 +158,8 @@ const StepOne = ({ onNext, dispatch }) => {
 			formatUnitsWitheDecimals(rentPriceArry?.[0].toString() || 0, decimals),
 		[rentPriceArry, decimals]
 	);
+
+	const Insufficient = useMemo(() => price > balance, [price, balance]);
 
 	const [fee, setFee] = useState(0);
 
@@ -213,7 +211,7 @@ const StepOne = ({ onNext, dispatch }) => {
 	const { write, prepareSuccess, writeStartSuccess } = useWriteContract({
 		functionName: 'register',
 		args: [...args],
-		enabled: available && isApprove,
+		enabled: available && isApprove && !Insufficient,
 		setTxHash: setTxHash,
 	});
 
@@ -228,19 +226,23 @@ const StepOne = ({ onNext, dispatch }) => {
 			dispatch({ type: 'setPaySuccess', payload: 'pending' });
 			write?.();
 		}
-	}, [isApprove, approve, write]);
+	}, [isApprove, approve, write, dispatch]);
 
 	useEffect(() => {
-		if (prepareSuccess && available) {
+		if (prepareSuccess && available && !Insufficient) {
 			getGas();
 		}
-	}, [getGas, prepareSuccess, available]);
+	}, [getGas, prepareSuccess, available, Insufficient]);
 
 	useEffect(() => {
 		if (writeStartSuccess) {
 			onNext?.();
 		}
 	}, [writeStartSuccess, onNext]);
+
+	useEffect(() => {
+		dispatch({ type: 'setYears', payload: years });
+	}, [years, dispatch]);
 
 	return (
 		<>
@@ -320,9 +322,13 @@ const StepOne = ({ onNext, dispatch }) => {
 					loading={btnLoading}
 					variant="contained"
 					onClick={approveOrPay}
-					disabled={!available}
+					disabled={!available || Insufficient}
 				>
-					{isApprove ? `pay ${price} ${checked}` : 'Approve'}
+					{isApprove
+						? Insufficient
+							? 'Insufficient balance'
+							: `pay ${price} ${checked}`
+						: 'Approve'}
 				</LoadingButton>
 			)}
 		</>
